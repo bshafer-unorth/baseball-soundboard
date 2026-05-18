@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Baseball Spotify Walk-Up Board</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -18,9 +20,17 @@
     }
 
     h2 {
-      font-size: 28px;
+      font-size: 30px;
       color: #facc15;
-      margin-top: 30px;
+      margin-top: 34px;
+      margin-bottom: 12px;
+    }
+
+    .note {
+      color: #d1d5db;
+      font-size: 18px;
+      margin-top: 8px;
+      line-height: 1.4;
     }
 
     .top-bar {
@@ -28,7 +38,7 @@
       gap: 12px;
       flex-wrap: wrap;
       align-items: center;
-      margin: 20px 0;
+      margin: 22px 0;
     }
 
     button {
@@ -40,6 +50,7 @@
       cursor: pointer;
       color: white;
       box-shadow: 0 4px 10px rgba(0,0,0,.35);
+      touch-action: manipulation;
     }
 
     button:hover {
@@ -58,21 +69,49 @@
       background: #6b7280;
     }
 
+    .team-tabs {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    .tab-button {
+      background: #374151;
+      font-size: 22px;
+    }
+
+    .tab-button.active {
+      background: #16a34a;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
     .player-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 16px;
-      margin-top: 20px;
+      margin-top: 16px;
     }
 
     .player-button {
       background: #16a34a;
-      min-height: 130px;
+      min-height: 132px;
       text-align: left;
       display: flex;
       flex-direction: column;
       justify-content: center;
       gap: 8px;
+    }
+
+    .visitor-button {
+      background: #7c3aed;
     }
 
     .player-name {
@@ -84,7 +123,7 @@
       font-size: 17px;
       font-weight: normal;
       color: #e5e7eb;
-      line-height: 1.2;
+      line-height: 1.25;
     }
 
     .start-time {
@@ -101,44 +140,65 @@
       background: #1f2937;
       padding: 16px;
       border-radius: 14px;
+      min-height: 72px;
     }
 
-    .note {
+    .small {
+      font-size: 15px;
       color: #9ca3af;
-      font-size: 18px;
-      margin-top: 10px;
+      margin-top: 8px;
     }
   </style>
 </head>
+
 <body>
 
   <h1>⚾ Baseball Spotify Walk-Up Board</h1>
 
   <div class="note">
-    Open Spotify first, play any song for a second, then pause it. That makes the device active.
+    Open Spotify first, play any song for a second, then pause it. That makes the device active for API control.
   </div>
 
   <div class="top-bar">
     <button class="login" onclick="login()">Login to Spotify</button>
-    <button class="pause" onclick="pauseSpotify()">Pause</button>
+    <button class="pause" onclick="pauseSpotify()">Pause Spotify</button>
     <button class="clear" onclick="clearCachedTracks()">Clear Cached Tracks</button>
   </div>
 
   <div id="status">Status: Not logged in</div>
 
-  <h2>Walk-Up Songs</h2>
-  <div id="playerButtons" class="player-grid"></div>
+  <div class="small">
+    Redirect URL being used by this page: <span id="redirectDisplay"></span>
+  </div>
+
+  <div class="team-tabs">
+    <button id="homeTab" class="tab-button active" onclick="showSection('home')">Home Walk-Ups</button>
+    <button id="visitorTab" class="tab-button" onclick="showSection('visitor')">Visitor Walk-Ups</button>
+  </div>
+
+  <div id="homeSection" class="section active">
+    <h2>Home Walk-Up Songs</h2>
+    <div id="homeButtons" class="player-grid"></div>
+  </div>
+
+  <div id="visitorSection" class="section">
+    <h2>Visitor Walk-Up Songs</h2>
+    <div id="visitorButtons" class="player-grid"></div>
+  </div>
 
 <script>
 const clientId = "847557a6ec1343978c41d7122e8381fe";
-const redirectUri = "https://bshafer-unorth.github.io/baseball-soundboard/";
+
+// Automatically uses the current GitHub Pages URL.
+// Example: https://YOUR-USERNAME.github.io/baseball-soundboard/
+const redirectUri = window.location.origin + window.location.pathname;
 
 const scopes = [
   "user-read-playback-state",
   "user-modify-playback-state"
 ];
 
-const walkupSongs = [
+const homeSongs = [
   {
     name: "Drew Bingamon",
     song: "Can't Tell It All",
@@ -253,6 +313,121 @@ const walkupSongs = [
   }
 ];
 
+const visitorSongs = [
+  {
+    name: "Visitor 1",
+    song: "Thunderstruck",
+    artist: "AC/DC",
+    query: "Thunderstruck AC/DC",
+    startMs: 0
+  },
+  {
+    name: "Visitor 2",
+    song: "Seven Nation Army",
+    artist: "The White Stripes",
+    query: "Seven Nation Army The White Stripes",
+    startMs: 0
+  },
+  {
+    name: "Visitor 3",
+    song: "We Will Rock You",
+    artist: "Queen",
+    query: "We Will Rock You Queen",
+    startMs: 0
+  },
+  {
+    name: "Visitor 4",
+    song: "Eye of the Tiger",
+    artist: "Survivor",
+    query: "Eye of the Tiger Survivor",
+    startMs: 0
+  },
+  {
+    name: "Visitor 5",
+    song: "Can't Stop",
+    artist: "Red Hot Chili Peppers",
+    query: "Can't Stop Red Hot Chili Peppers",
+    startMs: 0
+  },
+  {
+    name: "Visitor 6",
+    song: "The Final Countdown",
+    artist: "Europe",
+    query: "The Final Countdown Europe",
+    startMs: 0
+  },
+  {
+    name: "Visitor 7",
+    song: "Sweet Child O' Mine",
+    artist: "Guns N' Roses",
+    query: "Sweet Child O' Mine Guns N' Roses",
+    startMs: 0
+  },
+  {
+    name: "Visitor 8",
+    song: "Start Me Up",
+    artist: "The Rolling Stones",
+    query: "Start Me Up The Rolling Stones",
+    startMs: 0
+  },
+  {
+    name: "Visitor 9",
+    song: "Jump",
+    artist: "Van Halen",
+    query: "Jump Van Halen",
+    startMs: 0
+  },
+  {
+    name: "Visitor 10",
+    song: "Song 2",
+    artist: "Blur",
+    query: "Song 2 Blur",
+    startMs: 0
+  },
+  {
+    name: "Visitor 11",
+    song: "Life Is a Highway",
+    artist: "Rascal Flatts",
+    query: "Life Is a Highway Rascal Flatts",
+    startMs: 0
+  },
+  {
+    name: "Visitor 12",
+    song: "Centerfield",
+    artist: "John Fogerty",
+    query: "Centerfield John Fogerty",
+    startMs: 0
+  },
+  {
+    name: "Visitor 13",
+    song: "Take Me Out",
+    artist: "Franz Ferdinand",
+    query: "Take Me Out Franz Ferdinand",
+    startMs: 0
+  },
+  {
+    name: "Visitor 14",
+    song: "Believer",
+    artist: "Imagine Dragons",
+    query: "Believer Imagine Dragons",
+    startMs: 0
+  },
+  {
+    name: "Visitor 15",
+    song: "Hall of Fame",
+    artist: "The Script will.i.am",
+    query: "Hall of Fame The Script will.i.am",
+    startMs: 0
+  },
+  {
+    name: "Visitor 16",
+    song: "My Songs Know What You Did in the Dark",
+    artist: "Fall Out Boy",
+    query: "My Songs Know What You Did in the Dark Fall Out Boy",
+    startMs: 0
+  }
+];
+
 function setStatus(message) {
   document.getElementById("status").textContent = "Status: " + message;
 }
@@ -264,14 +439,38 @@ function formatTime(ms) {
   return minutes + ":" + String(seconds).padStart(2, "0");
 }
 
+function showSection(section) {
+  const homeSection = document.getElementById("homeSection");
+  const visitorSection = document.getElementById("visitorSection");
+  const homeTab = document.getElementById("homeTab");
+  const visitorTab = document.getElementById("visitorTab");
+
+  if (section === "home") {
+    homeSection.classList.add("active");
+    visitorSection.classList.remove("active");
+    homeTab.classList.add("active");
+    visitorTab.classList.remove("active");
+  } else {
+    visitorSection.classList.add("active");
+    homeSection.classList.remove("active");
+    visitorTab.classList.add("active");
+    homeTab.classList.remove("active");
+  }
+}
+
 function renderButtons() {
-  const container = document.getElementById("playerButtons");
+  renderSongButtons("homeButtons", homeSongs, "home");
+  renderSongButtons("visitorButtons", visitorSongs, "visitor");
+}
+
+function renderSongButtons(containerId, songList, type) {
+  const container = document.getElementById(containerId);
   container.innerHTML = "";
 
-  walkupSongs.forEach((item, index) => {
+  songList.forEach((item, index) => {
     const button = document.createElement("button");
-    button.className = "player-button";
-    button.onclick = () => playWalkup(index);
+    button.className = "player-button" + (type === "visitor" ? " visitor-button" : "");
+    button.onclick = () => playWalkupFromList(songList, index);
 
     button.innerHTML = `
       <div class="player-name">${item.name}</div>
@@ -359,7 +558,7 @@ async function handleCallback() {
       "Open Spotify, play any song for a second, pause it, then press a player button."
     );
 
-    window.history.replaceState({}, document.title, "/spotify-test.html");
+    window.history.replaceState({}, document.title, redirectUri);
   } else {
     setStatus("Login failed:\n" + JSON.stringify(data, null, 2));
   }
@@ -370,7 +569,7 @@ function getToken() {
 }
 
 function getCacheKey(item) {
-  return "spotify_track_" + item.name.replace(/\s+/g, "_");
+  return "spotify_track_" + item.name.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
 }
 
 async function searchSpotifyTrack(item) {
@@ -404,7 +603,7 @@ async function searchSpotifyTrack(item) {
   }
 
   if (!data.tracks || !data.tracks.items || data.tracks.items.length === 0) {
-    throw new Error("No Spotify track found for: " + item.query);
+    throw new Error("No Spotify track found for:\n" + item.query);
   }
 
   const track = data.tracks.items[0];
@@ -459,7 +658,7 @@ async function playSpotifyTrack(trackId, item) {
   throw new Error("Play failed. HTTP " + response.status + ":\n" + text);
 }
 
-async function playWalkup(index) {
+async function playWalkupFromList(songList, index) {
   const token = getToken();
 
   if (!token) {
@@ -467,7 +666,7 @@ async function playWalkup(index) {
     return;
   }
 
-  const item = walkupSongs[index];
+  const item = songList[index];
 
   try {
     const trackId = await searchSpotifyTrack(item);
@@ -521,12 +720,14 @@ async function pauseSpotify() {
 }
 
 function clearCachedTracks() {
-  walkupSongs.forEach(item => {
+  [...homeSongs, ...visitorSongs].forEach(item => {
     localStorage.removeItem(getCacheKey(item));
   });
 
-  setStatus("Cached Spotify track matches cleared. The next button press will search again.");
+  setStatus("Cached Spotify track matches cleared. The next button press will search Spotify again.");
 }
+
+document.getElementById("redirectDisplay").textContent = redirectUri;
 
 renderButtons();
 handleCallback();
